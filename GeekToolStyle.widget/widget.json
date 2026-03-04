@@ -1,0 +1,4 @@
+{
+  "name": "GeekToolStyle",
+  "description": "GeekTool-style system info: CPU, memory, disk, battery bars; load average; uptime; IPs; top CPU/RAM processes. Left-aligned, transparent, Monaco 12."
+}

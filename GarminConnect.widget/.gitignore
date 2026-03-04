@@ -1,0 +1,9 @@
+config.env
+config.env.*
+!config.env.example
+.tokens/
+.tokens/**/*.json
+*token*.json
+__pycache__/
+.venv/
+.cache/
