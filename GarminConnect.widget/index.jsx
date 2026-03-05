@@ -268,6 +268,62 @@ function latestValue(series) {
   return null;
 }
 
+function parseYmdLocal(ymd) {
+  if (typeof ymd !== "string") return null;
+  const m = ymd.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return null;
+  return new Date(year, month - 1, day);
+}
+
+function ymdLocal(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function latestNumericIndex(series) {
+  if (!Array.isArray(series)) return -1;
+  for (let i = series.length - 1; i >= 0; i--) {
+    const v = series[i];
+    if (typeof v === "number" && Number.isFinite(v)) return i;
+  }
+  return -1;
+}
+
+function latestNumericIndexAcross(seriesList) {
+  if (!Array.isArray(seriesList)) return -1;
+  return seriesList.reduce((maxIdx, s) => Math.max(maxIdx, latestNumericIndex(s)), -1);
+}
+
+function isLatestSeriesPointToday(series, fromYmd) {
+  const idx = latestNumericIndex(series);
+  if (idx < 0) return false;
+  const from = parseYmdLocal(fromYmd);
+  if (!from) return false;
+  from.setDate(from.getDate() + idx);
+  return ymdLocal(from) === ymdLocal(new Date());
+}
+
+function isLatestSeriesPointTodayAcross(seriesList, fromYmd) {
+  const idx = latestNumericIndexAcross(seriesList);
+  if (idx < 0) return false;
+  const from = parseYmdLocal(fromYmd);
+  if (!from) return false;
+  from.setDate(from.getDate() + idx);
+  return ymdLocal(from) === ymdLocal(new Date());
+}
+
+function isYmdToday(ymd) {
+  const date = parseYmdLocal(ymd);
+  if (!date) return false;
+  return ymdLocal(date) === ymdLocal(new Date());
+}
+
 function latestString(series) {
   if (!Array.isArray(series)) return null;
   for (let i = series.length - 1; i >= 0; i--) {
@@ -313,75 +369,118 @@ function IconWatch() {
   );
 }
 
-function IconHrv() {
+function IconHrv({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M3 13h4l2-5 3 9 2-5h7" />
+      {filled ? (
+        <g>
+          <path
+            d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.2-7 10-7 10z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path
+            d="M6.7 12.6h2.3l1.3-2.4 2 4.2 1.5-3h2.5"
+            fill="none"
+            stroke="rgba(12,12,12,0.75)"
+            strokeWidth="1.35"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+      ) : (
+        <g>
+          <path d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+          <path d="M6.7 12.6h2.3l1.3-2.4 2 4.2 1.5-3h2.5" />
+        </g>
+      )}
     </MonoSvg>
   );
 }
 
-function IconSleep() {
+function IconSleep({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M15.8 4.2a8 8 0 1 0 4 14.7A8.8 8.8 0 0 1 15.8 4.2z" />
+      <path
+        d="M15.8 4.2a8 8 0 1 0 4 14.7A8.8 8.8 0 0 1 15.8 4.2z"
+        fill={filled ? "currentColor" : "none"}
+        stroke={filled ? "none" : "currentColor"}
+      />
     </MonoSvg>
   );
 }
 
-function IconStages() {
+function IconStages({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M4 16h6v-4h4v-3h6" />
-      <line x1="4" y1="16" x2="4" y2="12" />
-      <line x1="10" y1="12" x2="10" y2="9" />
-      <line x1="14" y1="9" x2="14" y2="6" />
-      <line x1="20" y1="9" x2="20" y2="5" />
+      {filled ? (
+        <g fill="currentColor" stroke="none">
+          <rect x="4" y="12" width="6" height="4" />
+          <rect x="10" y="9" width="4" height="3" />
+          <rect x="14" y="6" width="6" height="3" />
+        </g>
+      ) : (
+        <g>
+          <path d="M4 16h6v-4h4v-3h6" />
+          <line x1="4" y1="16" x2="4" y2="12" />
+          <line x1="10" y1="12" x2="10" y2="9" />
+          <line x1="14" y1="9" x2="14" y2="6" />
+          <line x1="20" y1="9" x2="20" y2="5" />
+        </g>
+      )}
     </MonoSvg>
   );
 }
 
-function IconHeart() {
+function IconHeart({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.2-7 10-7 10z" />
+      <path
+        d="M12 20s-7-4.8-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.2-7 10-7 10z"
+        fill={filled ? "currentColor" : "none"}
+        stroke={filled ? "none" : "currentColor"}
+      />
     </MonoSvg>
   );
 }
 
-function IconStress() {
+function IconStress({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M13 2 5 14h6l-1 8 8-12h-6z" />
+      <path
+        d="M13 2 5 14h6l-1 8 8-12h-6z"
+        fill={filled ? "currentColor" : "none"}
+        stroke={filled ? "none" : "currentColor"}
+      />
     </MonoSvg>
   );
 }
 
-function IconBattery() {
+function IconBattery({ filled = false }) {
   return (
     <MonoSvg>
       <rect x="3" y="7" width="17" height="10" rx="2" />
       <line x1="21" y1="10" x2="21" y2="14" />
-      <line x1="6" y1="12" x2="16" y2="12" />
+      {filled ? <rect x="6" y="9.5" width="10" height="5" fill="currentColor" stroke="none" /> : <line x1="6" y1="12" x2="16" y2="12" />}
     </MonoSvg>
   );
 }
 
-function IconSteps() {
+function IconSteps({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M8.6 6.2c0-1 .8-1.8 1.8-1.8S12.2 5.2 12.2 6.2 11.4 8 10.4 8 8.6 7.2 8.6 6.2z" />
-      <path d="M6.7 12.6c0-1.3 1-2.3 2.3-2.3h.8c1.2 0 2.3 1 2.3 2.3V21H6.7z" />
-      <path d="M13 11.8h1.8c1.4 0 2.5 1.1 2.5 2.5V21H13z" />
+      <path d="M8.6 6.2c0-1 .8-1.8 1.8-1.8S12.2 5.2 12.2 6.2 11.4 8 10.4 8 8.6 7.2 8.6 6.2z" fill={filled ? "currentColor" : "none"} />
+      <path d="M6.7 12.6c0-1.3 1-2.3 2.3-2.3h.8c1.2 0 2.3 1 2.3 2.3V21H6.7z" fill={filled ? "currentColor" : "none"} />
+      <path d="M13 11.8h1.8c1.4 0 2.5 1.1 2.5 2.5V21H13z" fill={filled ? "currentColor" : "none"} />
     </MonoSvg>
   );
 }
 
-function IconCalories() {
+function IconCalories({ filled = false }) {
   return (
     <MonoSvg>
-      <path d="M13.5 3.5c.9 1.5.7 3.2-.6 4.7-1.1 1.2-1.7 2.2-1.7 3.5 0 1.7 1.3 2.9 3 2.9 2.5 0 4.3-2.1 4.3-4.9 0-2.3-1-4.5-3-6.2z" />
-      <path d="M9.4 9.6c-2.1 1.5-3.2 3.6-3.2 5.8 0 3.2 2.5 5.5 5.8 5.5 2.2 0 4.3-1.1 5.4-2.9" />
+      <path d="M13.5 3.5c.9 1.5.7 3.2-.6 4.7-1.1 1.2-1.7 2.2-1.7 3.5 0 1.7 1.3 2.9 3 2.9 2.5 0 4.3-2.1 4.3-4.9 0-2.3-1-4.5-3-6.2z" fill={filled ? "currentColor" : "none"} />
+      <path d="M9.4 9.6c-2.1 1.5-3.2 3.6-3.2 5.8 0 3.2 2.5 5.5 5.8 5.5 2.2 0 4.3-1.1 5.4-2.9" fill={filled ? "currentColor" : "none"} />
     </MonoSvg>
   );
 }
@@ -682,7 +781,7 @@ function DualAxisChartCard({
   );
 }
 
-function BodyBatteryChart({ highSeries, lowSeries, cardClassName }) {
+function BodyBatteryChart({ highSeries, lowSeries, cardClassName, iconFilled }) {
   const width = CHART_W;
   const pad = { top: 6, bottom: 6, left: 6, right: 6 };
   const highs = Array.isArray(highSeries) ? highSeries.map(numericOrNull) : [];
@@ -698,7 +797,7 @@ function BodyBatteryChart({ highSeries, lowSeries, cardClassName }) {
     <div className={`chart-card${cardClassName ? ` ${cardClassName}` : ""}`}>
       <div className="chart-header">
         <div className="chart-title">
-          <TitleWithIcon icon={<IconBattery />}>Body Battery · Daily High / Daily Low</TitleWithIcon>
+          <TitleWithIcon icon={<IconBattery filled={iconFilled} />}>Body Battery · Daily High / Daily Low</TitleWithIcon>
         </div>
         <div className="chart-values">
           <div className="chart-value-inline">
@@ -752,7 +851,7 @@ function BodyBatteryChart({ highSeries, lowSeries, cardClassName }) {
   );
 }
 
-function StepsChart({ stepsSeries, goalSeries, cardClassName }) {
+function StepsChart({ stepsSeries, goalSeries, cardClassName, iconFilled }) {
   const width = CHART_W;
   const pad = { top: 6, bottom: 6, left: 6, right: 6 };
   const steps = Array.isArray(stepsSeries) ? stepsSeries.map(numericOrNull) : [];
@@ -785,7 +884,7 @@ function StepsChart({ stepsSeries, goalSeries, cardClassName }) {
     <div className={`chart-card${cardClassName ? ` ${cardClassName}` : ""}`}>
       <div className="chart-header">
         <div className="chart-title">
-          <TitleWithIcon icon={<IconSteps />}>Steps · Daily</TitleWithIcon>
+          <TitleWithIcon icon={<IconSteps filled={iconFilled} />}>Steps · Daily</TitleWithIcon>
         </div>
         <div className="chart-values">
           <div className="chart-value-inline">
@@ -859,7 +958,7 @@ function StepsChart({ stepsSeries, goalSeries, cardClassName }) {
   );
 }
 
-function ActiveCaloriesChart({ activeCaloriesSeries }) {
+function ActiveCaloriesChart({ activeCaloriesSeries, iconFilled }) {
   const width = CHART_W;
   const pad = { top: 6, bottom: 6, left: 6, right: 6 };
   const goalCalories = 500;
@@ -881,7 +980,7 @@ function ActiveCaloriesChart({ activeCaloriesSeries }) {
     <div className="chart-card">
       <div className="chart-header">
         <div className="chart-title">
-          <TitleWithIcon icon={<IconCalories />}>Active Calories · Latest / Daily Avg</TitleWithIcon>
+          <TitleWithIcon icon={<IconCalories filled={iconFilled} />}>Active Calories · Latest / Daily Avg</TitleWithIcon>
         </div>
         <div className="chart-values">
           <div className="chart-value-inline">
@@ -953,7 +1052,7 @@ function ActiveCaloriesChart({ activeCaloriesSeries }) {
   );
 }
 
-function SleepStagesChart({ stages, sleepScore }) {
+function SleepStagesChart({ stages, sleepScore, iconFilled }) {
   if (!stages || !Array.isArray(stages.segments) || stages.segments.length === 0) {
     return null;
   }
@@ -1070,7 +1169,7 @@ function SleepStagesChart({ stages, sleepScore }) {
     <div className="chart-card">
       <div className="chart-header">
         <div className="chart-title">
-          <TitleWithIcon icon={<IconStages />}>
+          <TitleWithIcon icon={<IconStages filled={iconFilled} />}>
             Sleep Stages
             {(stages.start_local || stages.end_local)
               ? ` · ${durationLabel || "—"}`
@@ -1312,6 +1411,26 @@ export function render({ output }) {
       }
     }
   }
+  const hrvIconFilled = isLatestSeriesPointTodayAcross(
+    [data.series?.hrv_weekly_avg, data.series?.hrv_night_avg],
+    fromDate
+  );
+  const sleepScoreIconFilled = isLatestSeriesPointTodayAcross(
+    [data.series?.sleep_score, data.series?.sleep_duration_hours],
+    fromDate
+  );
+  const sleepStagesIconFilled = isYmdToday(sleepStagesDate);
+  const heartRateIconFilled = isLatestSeriesPointTodayAcross(
+    [data.series?.avg_high_hr, data.series?.resting_hr],
+    fromDate
+  );
+  const stressIconFilled = isLatestSeriesPointToday(data.series?.stress, fromDate);
+  const bodyBatteryIconFilled = isLatestSeriesPointTodayAcross(
+    [data.series?.body_battery_high, data.series?.body_battery_low],
+    fromDate
+  );
+  const stepsIconFilled = isLatestSeriesPointToday(data.series?.steps, fromDate);
+  const activeCaloriesIconFilled = isLatestSeriesPointToday(data.series?.active_calories, fromDate);
 
   return (
     <div className="garmin-shell">
@@ -1329,7 +1448,7 @@ export function render({ output }) {
         <ChartCard
           cardClassName="hrv-card"
           plotPad={{ top: 6, bottom: 6, left: 4, right: 0 }}
-          title={<TitleWithIcon icon={<IconHrv />}>{hrvTitleText}</TitleWithIcon>}
+          title={<TitleWithIcon icon={<IconHrv filled={hrvIconFilled} />}>{hrvTitleText}</TitleWithIcon>}
           value={latestValue(data.series?.hrv_weekly_avg)}
           valueSecondary={latestValue(data.series?.hrv_night_avg)}
           unit="ms"
@@ -1344,7 +1463,7 @@ export function render({ output }) {
         />
         <DualAxisChartCard
           cardClassName="sleep-score-tight"
-          title={<TitleWithIcon icon={<IconSleep />}>Sleep Score</TitleWithIcon>}
+          title={<TitleWithIcon icon={<IconSleep filled={sleepScoreIconFilled} />}>Sleep Score</TitleWithIcon>}
           rightValue={latestValue(data.series?.sleep_score)}
           rightUnit=""
           leftValue={latestValue(data.series?.sleep_duration_hours)}
@@ -1355,9 +1474,13 @@ export function render({ output }) {
           leftLabel="Duration"
           leftBarGoal={8}
         />
-        <SleepStagesChart stages={data.latest_sleep_stages} sleepScore={sleepStagesScore} />
+        <SleepStagesChart
+          stages={data.latest_sleep_stages}
+          sleepScore={sleepStagesScore}
+          iconFilled={sleepStagesIconFilled}
+        />
         <ChartCard
-          title={<TitleWithIcon icon={<IconHeart />}>Heart Rate · Avg High / Resting</TitleWithIcon>}
+          title={<TitleWithIcon icon={<IconHeart filled={heartRateIconFilled} />}>Heart Rate · Avg High / Resting</TitleWithIcon>}
           cardClassName="tight-axis"
           value={latestValue(data.series?.avg_high_hr)}
           valueSecondary={latestValue(data.series?.resting_hr)}
@@ -1367,7 +1490,7 @@ export function render({ output }) {
           lineColors={["rgba(255,255,255,0.96)", "rgba(255,255,255,0.55)"]}
         />
         <ChartCard
-          title={<TitleWithIcon icon={<IconStress />}>Stress · Daily Avg</TitleWithIcon>}
+          title={<TitleWithIcon icon={<IconStress filled={stressIconFilled} />}>Stress · Daily Avg</TitleWithIcon>}
           cardClassName="tight-axis"
           value={latestValue(data.series?.stress)}
           unit=""
@@ -1378,14 +1501,17 @@ export function render({ output }) {
           cardClassName="tight-axis"
           highSeries={data.series?.body_battery_high || []}
           lowSeries={data.series?.body_battery_low || []}
+          iconFilled={bodyBatteryIconFilled}
         />
         <StepsChart
           cardClassName="tight-axis"
           stepsSeries={data.series?.steps || []}
           goalSeries={data.series?.steps_goal || []}
+          iconFilled={stepsIconFilled}
         />
         <ActiveCaloriesChart
           activeCaloriesSeries={data.series?.active_calories || []}
+          iconFilled={activeCaloriesIconFilled}
         />
       </div>
     </div>

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import math
 import os
 import statistics
 import subprocess
@@ -417,6 +418,55 @@ def parse_int_env(name: str, default: int, min_value: int = 0) -> int:
     return max(min_value, parsed)
 
 
+def parse_iso_date(value: Any) -> Optional[date]:
+    if not isinstance(value, str):
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def payload_is_fresh_for_today(payload: dict[str, Any], today_local: Optional[date] = None) -> bool:
+    today = today_local or date.today()
+    from_day = parse_iso_date(payload.get("from"))
+    latest_data_day: Optional[date] = None
+
+    if from_day is not None:
+        series_obj = payload.get("series")
+        if isinstance(series_obj, dict):
+            for values in series_obj.values():
+                if not isinstance(values, list):
+                    continue
+                for idx in range(len(values) - 1, -1, -1):
+                    item = values[idx]
+                    if isinstance(item, bool):
+                        continue
+                    if isinstance(item, (int, float)) and math.isfinite(float(item)):
+                        candidate = from_day + timedelta(days=idx)
+                        if latest_data_day is None or candidate > latest_data_day:
+                            latest_data_day = candidate
+                        break
+
+    sleep_stages = payload.get("latest_sleep_stages")
+    if isinstance(sleep_stages, dict):
+        stages_day = parse_iso_date(sleep_stages.get("date"))
+        if stages_day is not None and (latest_data_day is None or stages_day > latest_data_day):
+            latest_data_day = stages_day
+
+    return latest_data_day == today
+
+
+def effective_cache_ttl_seconds(
+    payload: dict[str, Any],
+    normal_ttl_seconds: int,
+    stale_data_ttl_seconds: int,
+) -> int:
+    if payload_is_fresh_for_today(payload):
+        return int(normal_ttl_seconds)
+    return int(stale_data_ttl_seconds)
+
+
 def load_cache(cache_file: Path) -> Optional[dict[str, Any]]:
     try:
         raw = cache_file.read_text(encoding="utf-8")
@@ -772,19 +822,25 @@ def main() -> None:
         os.getenv("GARMIN_CACHE_FILE", str(widget_dir / ".cache" / "latest.json"))
     ).expanduser()
     cache_ttl_seconds = parse_int_env("GARMIN_CACHE_TTL_SECONDS", 3600, min_value=60)
+    stale_data_cache_ttl_seconds = parse_int_env("GARMIN_CACHE_STALE_TTL_SECONDS", 600, min_value=60)
     lock_file = cache_file.with_suffix(f"{cache_file.suffix}.revalidate.lock")
 
     should_use_cache = not args.init and not args.revalidate_cache
     if should_use_cache:
         cached = load_cache(cache_file)
         if cached is not None:
+            ttl_seconds = effective_cache_ttl_seconds(
+                cached["payload"],
+                normal_ttl_seconds=cache_ttl_seconds,
+                stale_data_ttl_seconds=stale_data_cache_ttl_seconds,
+            )
             age = time.time() - cached["fetched_at"]
-            if age <= cache_ttl_seconds:
+            if age <= ttl_seconds:
                 out(
                     with_cache_meta(
                         cached["payload"],
                         fetched_at=cached["fetched_at"],
-                        ttl_seconds=cache_ttl_seconds,
+                        ttl_seconds=ttl_seconds,
                         source="cache",
                     )
                 )
@@ -794,7 +850,7 @@ def main() -> None:
                 with_cache_meta(
                     cached["payload"],
                     fetched_at=cached["fetched_at"],
-                    ttl_seconds=cache_ttl_seconds,
+                    ttl_seconds=ttl_seconds,
                     source="cache",
                 )
             )
@@ -817,11 +873,16 @@ def main() -> None:
         return
 
     if payload.get("status") == "ok":
+        ttl_seconds = effective_cache_ttl_seconds(
+            payload,
+            normal_ttl_seconds=cache_ttl_seconds,
+            stale_data_ttl_seconds=stale_data_cache_ttl_seconds,
+        )
         out(
             with_cache_meta(
                 payload,
                 fetched_at=fetched_at_live,
-                ttl_seconds=cache_ttl_seconds,
+                ttl_seconds=ttl_seconds,
                 source="live",
             )
         )
