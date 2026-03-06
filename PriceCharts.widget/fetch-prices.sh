@@ -5,22 +5,19 @@
 # Stale-while-revalidate: always serves cache instantly,
 # refreshes in background every CACHE_MAX_AGE seconds.
 #
-# ASSET CONFIG — add new pairs here:
-#   "Label|source|ticker"
-#   source: "yahoo" or "coingecko"
-#   ticker: Yahoo Finance symbol (url-encoded) or CoinGecko coin id
-ASSETS=(
-  "BTC/USD|coingecko|bitcoin"
-  "ETH/USD|coingecko|ethereum"
-  "SP500/USD|yahoo|%5EGSPC"
-  "GOLD/USD|yahoo|GC%3DF"
-  "COPPER/USD|yahoo|HG%3DF"
-)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+[ -f "$SCRIPT_DIR/config.env" ] && . "$SCRIPT_DIR/config.env"
+
+if [ ${#PRICE_ASSETS[@]} -eq 0 ]; then
+  echo '{"error":"No pairs configured. Define PRICE_ASSETS in config.env"}'
+  exit 0
+fi
+ASSETS=("${PRICE_ASSETS[@]}")
+CACHE_MAX_AGE="${PRICE_CACHE_MAX_AGE:-1800}"
 
 CACHE_DIR="/tmp/ubersicht-pricecharts"
 CACHE_FILE="$CACHE_DIR/prices.json"
 LOCK_FILE="$CACHE_DIR/refresh.lock"
-CACHE_MAX_AGE=1800  # 30 minutes in seconds
 
 UA="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
 

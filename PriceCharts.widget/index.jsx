@@ -166,6 +166,10 @@ export function render({ output }) {
     return <div style={{ opacity: 0.5 }}>Parse error</div>;
   }
 
+  if (data.error) {
+    return <div style={{ opacity: 0.5 }}>{data.error}</div>;
+  }
+
   if (!data.assets || !Array.isArray(data.assets)) {
     return <div style={{ opacity: 0.5 }}>No data</div>;
   }
