@@ -1,4 +1,4 @@
-export const command = "cd GarminConnect.widget && set -a; [ -f ./config.env ] && . ./config.env; set +a; ${GARMIN_PYTHON:-python3} fetch-garmin.py";
+export const command = "cd GarminConnect.widget && set -a; [ -f ./config.env ] && . ./config.env; set +a; [ -f .venv/bin/activate ] && . .venv/bin/activate; python3 fetch-garmin.py";
 
 export const refreshFrequency = 1800000; // 30 min
 

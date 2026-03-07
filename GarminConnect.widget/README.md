@@ -22,30 +22,21 @@ Run everything below from inside the widget directory:
 cd GarminConnect.widget
 ```
 
-1. Create Python virtual environment:
+1. Create Python virtual environment and install dependencies:
 
 ```bash
-python3 -m venv ".venv"
+python3 -m venv .venv
+.venv/bin/python3 -m pip install --upgrade pip
+.venv/bin/python3 -m pip install garminconnect
 ```
 
-1. Install dependency into the venv:
-
-```bash
-".venv/bin/python3" -m pip install --upgrade pip
-".venv/bin/python3" -m pip install garminconnect
-```
-
-1. Configure python path in `config.env`:
+2. Copy the example config:
 
 ```bash
 cp -n config.env.example config.env
 ```
 
-Set `GARMIN_PYTHON` to an absolute path so it works regardless of current working directory:
-
-```bash
-GARMIN_PYTHON=/absolute/path/to/widgets/GarminConnect.widget/.venv/bin/python3
-```
+The widget auto-activates `.venv` if present — no need to configure a Python path.
 
 You can keep `GARMIN_EMAIL` and `GARMIN_PASSWORD` in `config.env`, or only pass them during `--init`.
 
@@ -54,7 +45,7 @@ You can keep `GARMIN_EMAIL` and `GARMIN_PASSWORD` in `config.env`, or only pass 
 Recommended (avoid storing password in config file):
 
 ```bash
-".venv/bin/python3" "fetch-garmin.py" \
+.venv/bin/python3 fetch-garmin.py \
   --init \
   --email "your_email@example.com" \
   --password "your_password"
@@ -65,15 +56,15 @@ The command output includes `tokenstore` so you can confirm where tokens were sa
 If you prefer environment/config credentials:
 
 ```bash
-set -a; . "./config.env"; set +a
-"$GARMIN_PYTHON" "./fetch-garmin.py" --init
+set -a; . ./config.env; set +a
+.venv/bin/python3 fetch-garmin.py --init
 ```
 
 ## Run data fetch manually
 
 ```bash
-set -a; . "./config.env"; set +a
-"$GARMIN_PYTHON" "./fetch-garmin.py"
+source .venv/bin/activate
+python3 fetch-garmin.py
 ```
 
 This prints JSON payload with current 30-day averages and `tokenstore`.

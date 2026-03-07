@@ -1,4 +1,4 @@
-export const command = "set -a; [ -f SolarActivity.widget/config.env ] && . SolarActivity.widget/config.env; set +a; ${SOLAR_PYTHON:-python3} SolarActivity.widget/fetch-solar.py";
+export const command = "python3 SolarActivity.widget/fetch-solar.py";
 
 export const refreshFrequency = 1800000; // 30 min
 
