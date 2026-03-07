@@ -1,7 +1,6 @@
-# Übersicht Widgets
+# Zen Widgets
 
 A collection of desktop widgets for [Übersicht](https://tracesof.net/uebersicht/) on macOS.
-
 
 ![Zen Wisgets](./zen-widgets-screen.png)
 
