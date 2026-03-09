@@ -167,21 +167,20 @@ export function render({ output }) {
     return <div className="solar-shell error">Failed to parse solar widget output.</div>;
   }
 
-  if (data.status !== "ok") {
-    const hint = data.hint ? `\n${data.hint}` : "";
-    return (
-      <div className="solar-shell error">
-        Solar fetch error: {data.message || "Unknown error"}
-        {hint}
-      </div>
-    );
+  if (data.status === "hidden") {
+    return null;
   }
 
+  if (data.status !== "ok") {
+    return null;
+  }
+
+  const stale = !!data.stale;
   const current = data && data.current ? data.current : {};
   const currentKp = toNum(current.kp);
   const level = current.level || "Unknown";
   const storm = current.storm_scale || "";
-  const statusLabel = storm ? `${level} ${storm}` : level;
+  const statusLabel = (storm ? `${level} ${storm}` : level) + (stale ? " (cached)" : "");
 
   const pastPoints = (Array.isArray(data.past7) ? data.past7 : [])
     .map((p) => ({ label: dayLabel(p.date), value: toNum(p.kp) }))

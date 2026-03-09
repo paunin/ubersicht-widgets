@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 import json
-import math
+import os
 import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any, Optional
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(SCRIPT_DIR, ".solar-cache.json")
+CACHE_MAX_AGE_SECONDS = 86400  # 24 h
 
 KP_FORECAST_URL = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json"
 FORECAST_45D_URL = "https://services.swpc.noaa.gov/json/45-day-forecast.json"
@@ -186,6 +190,29 @@ def kp_to_score_0_10(kp: float) -> float:
     return max(0.0, min(10.0, (kp / 9.0) * 10.0))
 
 
+def save_cache(payload: dict[str, Any]) -> None:
+    try:
+        with open(CACHE_FILE, "w") as f:
+            json.dump(payload, f)
+    except OSError:
+        pass
+
+
+def load_cache() -> Optional[dict[str, Any]]:
+    try:
+        age = datetime.now().timestamp() - os.path.getmtime(CACHE_FILE)
+        if age > CACHE_MAX_AGE_SECONDS:
+            return None
+        with open(CACHE_FILE) as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data.get("status") == "ok":
+            data["stale"] = True
+            return data
+    except (OSError, json.JSONDecodeError):
+        pass
+    return None
+
+
 def main() -> None:
     try:
         kp_raw = fetch_json(KP_FORECAST_URL)
@@ -222,15 +249,14 @@ def main() -> None:
                 "endpoints": [KP_FORECAST_URL, FORECAST_45D_URL],
             },
         }
+        save_cache(payload)
         out(payload)
-    except Exception as exc:
-        out(
-            {
-                "status": "error",
-                "message": str(exc),
-                "hint": "NOAA SWPC endpoints may be temporarily unavailable.",
-            }
-        )
+    except Exception:
+        cached = load_cache()
+        if cached:
+            out(cached)
+        else:
+            out({"status": "hidden"})
 
 
 if __name__ == "__main__":
