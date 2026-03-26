@@ -34,8 +34,8 @@ batPct=$(pmset -g batt 2>/dev/null | grep -oE '[0-9]+%' | tr -d '%' | head -1)
 [ -z "$batPct" ] && batPct="N/A"
 
 # Battery health (max/design capacity)
-maxCap=$(ioreg -w0 -l 2>/dev/null | grep '"AppleRawMaxCapacity" ' | awk '{print $7}')
-desCap=$(ioreg -w0 -l 2>/dev/null | grep '"DesignCapacity" ' | awk '{print $7}')
+maxCap=$(ioreg -w0 -l 2>/dev/null | grep '"AppleRawMaxCapacity" ' | grep -oE '[0-9]+$')
+desCap=$(ioreg -w0 -l 2>/dev/null | grep '"DesignCapacity" ' | grep -oE '[0-9]+$')
 batHealth="N/A"
 if [ -n "$maxCap" ] && [ -n "$desCap" ] && [ "$desCap" -gt 0 ]; then
   batHealth=$(echo "scale=0; $maxCap * 100 / $desCap" | bc 2>/dev/null)
