@@ -89,6 +89,8 @@ function PriceChart({ symbol, current, change, prices, width = 225, height = 95 
   const isUp = prices[prices.length - 1] >= prices[0];
   const color = isUp ? "#4caf50" : "#ef5350";
   const pctChange = ((prices[prices.length - 1] - prices[0]) / prices[0] * 100);
+  const startPrice = prices[0];
+  const endPrice = prices[prices.length - 1];
   const gradId = "grad-" + symbol.replace(/[^a-zA-Z0-9]/g, "");
 
   let min = prices[0], max = prices[0];
@@ -146,9 +148,9 @@ function PriceChart({ symbol, current, change, prices, width = 225, height = 95 
         />
       </svg>
       <div className="chart-range">
-        <span>{formatPrice(min, symbol)}</span>
+        <span>{formatPrice(startPrice, symbol)}</span>
         <span>7d</span>
-        <span>{formatPrice(max, symbol)}</span>
+        <span>{formatPrice(endPrice, symbol)}</span>
       </div>
     </div>
   );
